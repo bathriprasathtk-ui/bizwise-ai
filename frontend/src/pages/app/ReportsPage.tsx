@@ -85,8 +85,8 @@ export function ReportsPage() {
     <div className="space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-subtle">Reports</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-heading">Performance over time</h1>
+          <p className="eyebrow">Reports</p>
+          <h1 className="mt-1.5 text-[26px] leading-tight sm:text-[30px]">Performance over time</h1>
           <p className="mt-1 max-w-2xl text-sm leading-relaxed text-body">
             Revenue, profit, expenses and margins across your saved periods — all amounts in {currency}.
           </p>

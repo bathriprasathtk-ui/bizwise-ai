@@ -68,7 +68,12 @@ export function computeMetrics(entry: EntryNumbers): Metrics {
     grossMargin: round(safeDivide(grossProfit, revenue), 4),
     netMargin: round(safeDivide(netProfit, revenue), 4),
     expenseRatio: round(safeDivide(totalExpenses, revenue), 4),
-    cashRunwayMonths: totalExpenses > 0 ? round(entry.cashOnHand / totalExpenses, 1) : null,
+    // Runway only means something while the period burns cash. When revenue covers
+    // every cost there is no burn, so the value is null and callers show "cash-flow positive".
+    cashRunwayMonths:
+      totalExpenses > revenue && totalExpenses > 0
+        ? round(entry.cashOnHand / (totalExpenses - revenue), 1)
+        : null,
   };
 }
 
@@ -96,7 +101,15 @@ export function healthScore(metrics: Metrics): HealthScore {
       { label: 'Net margin', score: profitability, max: 30, detail: 'How much of each sale is profit' },
       { label: 'Gross margin', score: gross, max: 20, detail: 'Profit after the cost of goods' },
       { label: 'Cost control', score: efficiency, max: 20, detail: 'Share of revenue spent on costs' },
-      { label: 'Cash runway', score: runway, max: 15, detail: 'Months of cash at this burn rate' },
+      {
+        label: 'Cash runway',
+        score: runway,
+        max: 15,
+        detail:
+          metrics.cashRunwayMonths === null
+            ? 'No cash burn this period'
+            : 'Months of cash at this burn rate',
+      },
       { label: 'Profitability', score: profitable, max: 15, detail: 'Profitable in the latest period' },
     ],
   };

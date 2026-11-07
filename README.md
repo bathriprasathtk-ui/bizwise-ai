@@ -6,9 +6,12 @@ margins, cash runway, a health score, what-if projections and grounded advice fr
 This is a working full-stack application: real Supabase authentication, real database persistence with row level
 security, real finance calculations, and an Express backend that is the only thing allowed to talk to Gemini.
 
-> **Status:** the repository builds locally (`frontend` and `backend`), CI is configured, and the API contract has
-> been exercised locally. It is **not deployed** and the Supabase migrations have **not been applied** to a project
-> yet — both need your credentials (see [Supabase setup](#supabase-setup) and [Vercel deployment](#vercel-deployment)).
+> **Status:** the repository builds locally (`frontend` and `backend`), CI is configured, and both migrations are
+> applied to a live Supabase project. Authentication, persistence, row level security isolation, entry CRUD, the
+> simulator, reports and the Gemini advisor were exercised end to end against it, including the advisor's failure and
+> retry states. The app is **not deployed** yet: publishing the two Vercel projects is a manual step (see
+> [Vercel deployment](#vercel-deployment)). The advisor stays disabled until a Gemini key is set — it returns
+> `503 AI_NOT_CONFIGURED` rather than inventing advice (see [Gemini setup](#gemini-setup)).
 
 ---
 
@@ -19,6 +22,7 @@ security, real finance calculations, and an Express backend that is the only thi
 - [Technology stack](#technology-stack)
 - [Repository structure](#repository-structure)
 - [Local setup](#local-setup)
+- [Gemini setup](#gemini-setup)
 - [Supabase setup](#supabase-setup)
 - [Environment variables](#environment-variables)
 - [API reference](#api-reference)
@@ -37,6 +41,9 @@ period — period label, revenue, cost of goods sold, operating expenses and cas
 
 - net profit, gross margin, net margin, expense ratio and cash runway
 - period-over-period change for revenue and profit
+
+Cash runway is cash on hand divided by the period's cash burn (costs minus revenue). A period that covers all of its
+costs has no burn, so the app reports "cash-flow positive" instead of inventing a month count.
 - a weighted business health score out of 100
 - a what-if simulator for price, volume, cost and expense changes
 - an AI advisor that answers questions using those saved numbers
@@ -52,14 +59,19 @@ illustrative dashboard preview, and a final call to action.
 **Authentication** — Supabase email/password sign-up, sign-in, sign-out, forgot password, reset password, persistent
 sessions, protected routes and friendly validation and error states.
 
-**Dashboard** — business name, revenue, net profit, cash on hand, gross margin, revenue and profit trend chart, health
-score gauge with factor breakdown, and AI insights with an explicit generate/regenerate action.
+**Dashboard** — greeting with the business name, a business health score out of 100 with its weighted factors and a
+recommended next action, revenue / net profit / cash position / runway cards, a revenue-versus-profit trend chart with
+period-over-period comparison, deterministic growth and risk signals computed from your own entries, and AI insights
+with an explicit generate/regenerate action. A dedicated empty state explains the first three steps when nothing is
+saved yet.
 
-**Business analysis** — validated financial entry form, saved history, edit and delete for your own entries only, and
-calculated metrics for the latest period.
+**Business analysis** — a worksheet grouped into period, revenue, direct costs, operating expenses, cash and notes,
+with a live preview beside the form, plain-English explanations of each ratio, saved history, and edit and delete for
+your own entries only.
 
-**AI advisor** — chat interface with suggested starter questions, stored conversation history, retry on failure, and
-server-side Gemini calls that receive the your financial context.
+**AI advisor** — a business copilot with five suggested questions, a visible grounding panel (which periods the model
+can see), stored conversation history, a retry button after a failed request, explicit no-data and not-configured
+states, and server-side Gemini calls that receive your financial context.
 
 **Simulator** — price, volume, cost and operating-expense changes with an optional target profit, projected revenue,
 expenses, profit, margin, difference from current profit, a rule-based recommended action, named saved scenarios and
@@ -67,7 +79,11 @@ deletion of your own scenarios.
 
 **Reports** — revenue history, profit history, expense trends, margin trends, summary cards and period filtering.
 
-**Settings** — business name, default currency, account email, password reset email, dark mode toggle and logout.
+**Settings** — business name, default currency, account email, password reset email, a light / dark / system
+appearance control and logout. Save confirmations are inline; technical identifiers stay out of the way.
+
+**Appearance** — light and dark themes share one token layer, follow the OS when set to system, and are applied before
+first paint so there is no flash of the wrong theme.
 
 ## Technology stack
 
@@ -180,6 +196,38 @@ npm run dev               # http://localhost:5173
 4. Add one financial entry in **Business Analysis**.
 5. The dashboard, advisor and simulator now have data to work with.
 
+## Gemini setup
+
+The advisor and the dashboard insights are served by Google Gemini through the Express backend. The browser never sees
+the key: it is read from `AI_API_KEY` on the server and every request is scoped to the signed-in user.
+
+1. Create a key at <https://aistudio.google.com/app/apikey>. The free tier is enough to try the app.
+2. Put these three lines in `backend/.env` (never in `frontend/.env`, never committed):
+
+   ```bash
+   AI_PROVIDER=gemini
+   AI_API_KEY=<your key>
+   AI_MODEL=gemini-3.5-flash
+   AI_MODEL_FALLBACK=gemini-3.5-flash-lite
+   ```
+
+3. Restart the backend. `GET /api/health` returning `200` and a successful advisor reply confirm the wiring; until
+then the app shows a friendly in-app message instead of fake advice.
+
+Notes on models and limits:
+
+- `gemini-3.5-flash` is the default: it is a current free-tier model, fast enough for chat, and produced grounded
+  answers on the seeded data. Older names such as `gemini-2.5-flash` are rejected for new API keys with a 404, which
+the backend maps to `AI_MODEL_UNAVAILABLE`.
+- `AI_MODEL_FALLBACK` (default `gemini-3.5-flash-lite`) is tried automatically when the primary model returns 429
+  (quota) or 5xx (high demand). The backend retries once with a short backoff, then switches models, and logs which
+  model answered — no key or user data is ever logged.
+- Gemini 3.x spends part of the output budget on internal reasoning, so the backend requests a larger token budget
+  (2048 for insights, 1800 for chat) and reports an empty `MAX_TOKENS` reply as `AI_TRUNCATED` instead of returning a
+  half sentence.
+- Free-tier quota is per day and per model. If both models are exhausted the advisor returns a retryable error and the
+  UI offers **Try again**; the app keeps working, only the AI actions pause.
+
 ## Supabase setup
 
 Full instructions live in [`supabase/README.md`](supabase/README.md). In short:
@@ -225,7 +273,8 @@ from `public`, `anon` and `authenticated`, so it cannot be called through the RE
 | `AI_API_KEY`                  | yes      | Gemini API key, server-only                                  |
 | `CORS_ORIGIN`                 | yes      | comma-separated allowed browser origins                      |
 | `PORT`                        | no       | local port, defaults to `8787`                               |
-| `AI_MODEL`                    | no       | optional model override, defaults to `gemini-2.5-flash`      |
+| `AI_MODEL`                    | no       | defaults to `gemini-3.5-flash`                               |
+| `AI_MODEL_FALLBACK`           | no       | defaults to `gemini-3.5-flash-lite`, used on 429 / 5xx        |
 
 ## API reference
 
@@ -290,7 +339,8 @@ Two independent Vercel projects from the same repository.
 1. **Add New → Project**, import the repo, set **Root Directory** to `backend`.
 2. Framework preset: **Other** (no build command is required; Vercel detects `api/index.ts`).
 3. Environment variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `AI_PROVIDER=gemini`, `AI_API_KEY`,
-   `CORS_ORIGIN=https://<your-frontend-domain>` (comma-separate extra origins such as preview URLs).
+   `CORS_ORIGIN=https://<your-frontend-domain>` (comma-separate extra origins such as preview URLs), and optionally
+   `AI_MODEL` / `AI_MODEL_FALLBACK` to pin the models. Add the key in Vercel, not in the repository.
 4. Deploy, then check `https://<backend-domain>/health` and `https://<backend-domain>/api/health`.
 
 `backend/api/index.ts` exports the Express app; `src/index.ts` keeps `app.listen()` for local development only.
@@ -341,6 +391,18 @@ turn confirmation off for local testing. The app shows a "check your inbox" stat
 
 **Advisor returns 409 `NO_FINANCIAL_DATA`.** Add at least one financial entry; the advisor deliberately refuses to
 advise without real data.
+
+**Advisor returns 429 / "high demand" after a while.** The Gemini free tier is per-day and per-model. The backend
+retries and falls back to `AI_MODEL_FALLBACK` first; if both are exhausted, wait for the daily reset or enable billing.
+
+**Advisor returns `AI_MODEL_UNAVAILABLE`.** `AI_MODEL` names a model your key cannot use (often an older name such as
+`gemini-2.5-flash`). Set `AI_MODEL=gemini-3.5-flash` and restart the backend.
+
+**Advisor returns `AI_TRUNCATED`.** The model hit the output-token ceiling before finishing. Ask a narrower question,
+or raise the token budget in `backend/src/services/ai.ts`.
+
+**The cash runway card says "Positive".** That is correct when the latest period covers all of its costs: there is no
+burn, so a month count would be meaningless. The card shows how many periods of costs the cash covers instead.
 
 **`/health` works but `/api/business` returns 503 `DATABASE_UNAVAILABLE`.** The Supabase server credentials are missing
 or wrong on the backend.

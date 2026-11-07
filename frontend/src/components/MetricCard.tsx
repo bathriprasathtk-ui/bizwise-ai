@@ -24,17 +24,21 @@ export function DeltaBadge({ change, label }: { change: number | null; label?: s
         flat
           ? 'bg-surface-muted text-subtle'
           : positive
-            ? 'bg-brand-50 text-brand-800 dark:bg-brand-900/40 dark:text-brand-100'
-            : 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300',
+            ? 'bg-brand-50 text-positive dark:bg-brand-900/40 dark:text-positive'
+            : 'bg-[color:color-mix(in_srgb,var(--color-risk)_10%,transparent)] text-risk',
       )}
     >
       <Icon aria-hidden="true" className="h-3 w-3" />
-      {formatSignedPercent(change)}
+      <span className="numeric">{formatSignedPercent(change)}</span>
       {label ? <span className="font-normal opacity-80">{label}</span> : null}
     </span>
   );
 }
 
+/**
+ * Executive metric card. The value carries the weight; everything else is
+ * supporting detail, so numbers stay scannable across a row of four.
+ */
 export function MetricCard({
   label,
   value,
@@ -42,6 +46,8 @@ export function MetricCard({
   deltaLabel,
   hint,
   icon,
+  footer,
+  className,
 }: {
   label: string;
   value: string;
@@ -49,22 +55,30 @@ export function MetricCard({
   deltaLabel?: string;
   hint?: ReactNode;
   icon?: ReactNode;
+  footer?: ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-surface p-5 shadow-soft">
+    <div
+      className={cn(
+        'group relative overflow-hidden rounded-2xl bg-surface p-5 shadow-soft ring-1 ring-[color:var(--color-line)]',
+        className,
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-medium uppercase tracking-wide text-subtle">{label}</p>
+        <p className="eyebrow">{label}</p>
         {icon ? (
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-muted text-brand-700 dark:text-brand-300">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-200">
             {icon}
           </span>
         ) : null}
       </div>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-heading">{value}</p>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
+      <p className="numeric mt-3 font-display text-[27px] leading-none tracking-tight text-heading">{value}</p>
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
         {delta === undefined ? null : <DeltaBadge change={delta} label={deltaLabel} />}
-        {hint ? <span className="text-xs text-subtle">{hint}</span> : null}
+        {hint ? <span className="text-xs leading-snug text-subtle">{hint}</span> : null}
       </div>
+      {footer ? <div className="mt-3 border-t border-line pt-3 text-xs text-subtle">{footer}</div> : null}
     </div>
   );
 }

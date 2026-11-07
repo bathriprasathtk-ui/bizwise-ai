@@ -61,14 +61,14 @@ export function DashboardPreview() {
             <AreaChart data={SERIES} margin={{ top: 6, right: 0, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="previewRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#0F766E" stopOpacity={0.25} />
-                  <stop offset="100%" stopColor="#0F766E" stopOpacity={0.02} />
+                  <stop offset="0%" stopColor="var(--color-series-primary)" stopOpacity={0.25} />
+                  <stop offset="100%" stopColor="var(--color-series-primary)" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="#0F766E"
+                stroke="var(--color-series-primary)"
                 strokeWidth={2}
                 fill="url(#previewRevenue)"
                 dot={false}

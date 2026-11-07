@@ -2,20 +2,22 @@ import { Loader2 } from 'lucide-react';
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'subtle';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'subtle' | 'inverse';
 type Size = 'sm' | 'md' | 'lg';
 
 const BASE =
-  'inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60';
+  'inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-[background-color,box-shadow,color] duration-150 disabled:cursor-not-allowed disabled:opacity-55';
 
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-brand-700 text-white hover:bg-brand-800 active:bg-brand-900',
-  secondary: 'border border-line bg-surface text-heading hover:bg-surface-muted',
+  primary:
+    'bg-brand-700 text-white shadow-[0_10px_24px_-14px_rgba(15,118,110,0.9)] hover:bg-brand-800 active:bg-brand-900',
+  secondary:
+    'bg-surface text-heading ring-1 ring-[color:var(--color-line)] hover:bg-surface-muted active:bg-surface-muted',
   ghost: 'text-body hover:bg-surface-muted hover:text-heading',
   danger:
-    'border border-red-300 bg-white text-red-700 hover:bg-red-50 dark:border-red-900 dark:bg-transparent dark:text-red-300 dark:hover:bg-red-950/50',
-  subtle:
-    'bg-brand-50 text-brand-800 hover:bg-brand-100 dark:bg-brand-900/40 dark:text-brand-100 dark:hover:bg-brand-900/60',
+    'bg-surface text-risk ring-1 ring-[color:color-mix(in_srgb,var(--color-risk)_38%,transparent)] hover:bg-[color:color-mix(in_srgb,var(--color-risk)_10%,transparent)]',
+  subtle: 'bg-brand-50 text-brand-800 hover:bg-brand-100 dark:bg-brand-900/40 dark:text-brand-100 dark:hover:bg-brand-900/60',
+  inverse: 'bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15',
 };
 
 const SIZES: Record<Size, string> = {

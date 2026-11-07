@@ -16,7 +16,8 @@ export const env = {
   supabaseServiceRoleKey: readString('SUPABASE_SERVICE_ROLE_KEY'),
   aiProvider: readString('AI_PROVIDER', 'gemini').toLowerCase(),
   aiApiKey: readString('AI_API_KEY'),
-  aiModel: readString('AI_MODEL', 'gemini-2.5-flash'),
+  aiModel: readString('AI_MODEL', 'gemini-3.5-flash'),
+  aiModelFallback: readString('AI_MODEL_FALLBACK', 'gemini-3.5-flash-lite'),
   corsOrigins: corsOrigin
     .split(',')
     .map((value) => value.trim().replace(/\/+$/, ''))

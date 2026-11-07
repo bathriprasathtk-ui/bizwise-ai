@@ -1,44 +1,73 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-type Theme = 'light' | 'dark';
+export type ThemeMode = 'light' | 'dark' | 'system';
+export type ResolvedTheme = 'light' | 'dark';
 
 interface ThemeContextValue {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
+  /** The user's explicit choice, including "system". */
+  mode: ThemeMode;
+  /** What is actually painted right now. */
+  theme: ResolvedTheme;
+  setMode: (mode: ThemeMode) => void;
   toggleTheme: () => void;
 }
 
 const STORAGE_KEY = 'bizwise-theme';
+const DARK_QUERY = '(prefers-color-scheme: dark)';
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function readStoredTheme(): Theme {
+function readStoredMode(): ThemeMode {
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === 'light' || stored === 'dark') return stored;
+    if (stored === 'light' || stored === 'dark' || stored === 'system') return stored;
   } catch {
-    // Storage can be unavailable in private browsing; fall back to light.
+    // Storage can be unavailable in private browsing; follow the OS instead.
   }
-  return 'light';
+  return 'system';
+}
+
+function systemPrefersDark(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  return window.matchMedia(DARK_QUERY).matches;
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(readStoredTheme);
+  const [mode, setModeState] = useState<ThemeMode>(readStoredMode);
+  const [systemDark, setSystemDark] = useState<boolean>(systemPrefersDark);
 
+  // Keep following the OS while the user has not picked a side.
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-    try {
-      window.localStorage.setItem(STORAGE_KEY, theme);
-    } catch {
-      // Ignore storage failures.
+    if (typeof window.matchMedia !== 'function') return;
+    const query = window.matchMedia(DARK_QUERY);
+    const onChange = (event: MediaQueryListEvent) => setSystemDark(event.matches);
+    setSystemDark(query.matches);
+    if (typeof query.addEventListener === 'function') {
+      query.addEventListener('change', onChange);
+      return () => query.removeEventListener('change', onChange);
     }
-  }, [theme]);
-
-  const setTheme = useCallback((next: Theme) => setThemeState(next), []);
-  const toggleTheme = useCallback(() => {
-    setThemeState((current) => (current === 'dark' ? 'light' : 'dark'));
+    query.addListener(onChange);
+    return () => query.removeListener(onChange);
   }, []);
 
-  const value = useMemo(() => ({ theme, setTheme, toggleTheme }), [theme, setTheme, toggleTheme]);
+  const theme: ResolvedTheme = mode === 'system' ? (systemDark ? 'dark' : 'light') : mode;
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle('dark', theme === 'dark');
+    root.style.colorScheme = theme;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, mode);
+    } catch {
+      // Ignore storage failures; the theme still applies for this session.
+    }
+  }, [mode, theme]);
+
+  const setMode = useCallback((next: ThemeMode) => setModeState(next), []);
+  const toggleTheme = useCallback(() => {
+    setModeState(theme === 'dark' ? 'light' : 'dark');
+  }, [theme]);
+
+  const value = useMemo(() => ({ mode, theme, setMode, toggleTheme }), [mode, theme, setMode, toggleTheme]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

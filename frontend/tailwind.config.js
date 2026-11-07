@@ -6,16 +6,23 @@ export default {
     extend: {
       colors: {
         brand: {
-          50: '#f0fdfa',
-          100: '#ccfbf1',
-          200: '#99f6e4',
-          300: '#5eead4',
-          400: '#2dd4bf',
-          500: '#14b8a6',
-          600: '#0d9488',
+          50: '#eefaf6',
+          100: '#d3f3ea',
+          200: '#a8e7d8',
+          300: '#6fd4c1',
+          400: '#35b8a5',
+          500: '#14a08c',
+          600: '#0d8272',
           700: '#0f766e',
-          800: '#115e59',
-          900: '#134e4a',
+          800: '#115e57',
+          900: '#124d48',
+        },
+        ink: {
+          950: '#081b24',
+          900: '#0b1f2a',
+          800: '#10303a',
+          700: '#16414a',
+          600: '#1f525c',
         },
         page: 'var(--color-page)',
         surface: 'var(--color-surface)',
@@ -24,6 +31,9 @@ export default {
         heading: 'var(--color-heading)',
         body: 'var(--color-body)',
         subtle: 'var(--color-subtle)',
+        positive: 'var(--color-positive)',
+        attention: 'var(--color-attention)',
+        risk: 'var(--color-risk)',
       },
       fontFamily: {
         sans: [
@@ -37,17 +47,33 @@ export default {
           'Arial',
           'sans-serif',
         ],
+        display: ['Fraunces', 'Iowan Old Style', 'Georgia', 'Cambria', 'serif'],
       },
       borderRadius: {
         xl: '12px',
-        '2xl': '16px',
+        '2xl': '18px',
+        '3xl': '24px',
       },
       boxShadow: {
-        soft: '0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 28px -20px rgba(15, 23, 42, 0.28)',
-        lift: '0 2px 4px rgba(15, 23, 42, 0.05), 0 24px 48px -28px rgba(15, 23, 42, 0.35)',
+        soft: '0 1px 2px rgba(16, 35, 58, 0.04), 0 14px 32px -24px rgba(16, 35, 58, 0.35)',
+        lift: '0 2px 6px rgba(16, 35, 58, 0.06), 0 28px 56px -32px rgba(16, 35, 58, 0.42)',
+        panel: '0 24px 60px -40px rgba(8, 27, 36, 0.55)',
+        inset: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
       },
       maxWidth: {
-        content: '1120px',
+        content: '1200px',
+      },
+      letterSpacing: {
+        eyebrow: '0.14em',
+      },
+      keyframes: {
+        rise: {
+          '0%': { opacity: '0', transform: 'translateY(6px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        rise: 'rise 0.35s ease-out both',
       },
     },
   },

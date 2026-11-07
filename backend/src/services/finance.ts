@@ -104,7 +104,12 @@ export function computeMetrics(entry: EntryNumbers): Metrics {
   const totalExpenses = roundMoney(cogs + operatingExpenses);
   const grossProfit = roundMoney(revenue - cogs);
   const netProfit = roundMoney(revenue - totalExpenses);
-  const cashRunwayMonths = totalExpenses > 0 ? round(entry.cashOnHand / totalExpenses, 1) : null;
+  // Runway is cash divided by the monthly cash burn. A period that covers all of
+  // its costs has no burn, so runway is null and reads as cash-flow positive.
+  const cashRunwayMonths =
+    totalExpenses > revenue && totalExpenses > 0
+      ? round(entry.cashOnHand / (totalExpenses - revenue), 1)
+      : null;
 
   return {
     revenue,

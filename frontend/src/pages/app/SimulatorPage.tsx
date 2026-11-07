@@ -162,8 +162,8 @@ export function SimulatorPage() {
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-xs font-medium uppercase tracking-wide text-subtle">Simulator</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-heading">What-if simulator</h1>
+        <p className="eyebrow">Simulator</p>
+        <h1 className="mt-1.5 text-[26px] leading-tight sm:text-[30px]">What-if simulator</h1>
         <p className="mt-1 max-w-2xl text-sm leading-relaxed text-body">
           Projections start from your latest saved period. Move one assumption at a time to see which lever actually
           changes profit.

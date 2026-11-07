@@ -15,10 +15,12 @@ alter table public.financial_entries force row level security;
 alter table public.simulations force row level security;
 alter table public.chat_messages force row level security;
 
-revoke all on table public.businesses from anon;
-revoke all on table public.financial_entries from anon;
-revoke all on table public.simulations from anon;
-revoke all on table public.chat_messages from anon;
+-- Supabase's default privileges grant ALL on new tables in `public` to anon and
+-- authenticated. Granting a subset afterwards does not remove that, so revoke first.
+revoke all on table public.businesses from anon, authenticated;
+revoke all on table public.financial_entries from anon, authenticated;
+revoke all on table public.simulations from anon, authenticated;
+revoke all on table public.chat_messages from anon, authenticated;
 
 grant select, insert, update on table public.businesses to authenticated;
 grant select, insert, update, delete on table public.financial_entries to authenticated;
