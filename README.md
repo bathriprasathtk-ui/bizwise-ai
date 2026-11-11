@@ -341,10 +341,17 @@ Two independent Vercel projects from the same repository.
 3. Environment variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `AI_PROVIDER=gemini`, `AI_API_KEY`,
    `CORS_ORIGIN=https://<your-frontend-domain>` (comma-separate extra origins such as preview URLs), and optionally
    `AI_MODEL` / `AI_MODEL_FALLBACK` to pin the models. Add the key in Vercel, not in the repository.
-4. Deploy, then check `https://<backend-domain>/health` and `https://<backend-domain>/api/health`.
+4. Deploy, then check `https://<backend-domain>/health` and `https://<backend-domain>/api/health` (both `200`). To
+   prove routing, `https://<backend-domain>/api/business` must answer `401 AUTH_REQUIRED` — a platform `404` there means
+   the rewrites are not reaching the function.
+5. `vercel dev` from `backend/` reproduces the same routing locally before you deploy.
 
 `backend/api/index.ts` exports the Express app; `src/index.ts` keeps `app.listen()` for local development only.
-`backend/vercel.json` rewrites `/health` to the single serverless function.
+
+Vercel maps a function file at `api/index.ts` to `/api` only, so `backend/vercel.json` forwards `/api/(.*)` and
+`/health` to that single function, which then routes internally. Express is mounted on both `/api` and `/`, so the app
+answers whether the function receives the original path or a flattened one. Do not remove those rewrites: without them
+`/api/business` and the other nested routes return 404 from the platform before Express sees them.
 
 ### Frontend project
 
