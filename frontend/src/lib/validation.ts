@@ -103,6 +103,9 @@ export function friendlyAuthError(message: string): string {
   if (normalized.includes('password should be at least')) {
     return 'Use a password with at least 8 characters.';
   }
+  if (normalized.includes('email rate limit') || normalized.includes('over_email_send_rate_limit')) {
+    return 'We have reached the limit for sending sign-in emails. Try again in up to an hour.';
+  }
   if (normalized.includes('rate limit') || normalized.includes('only request this after')) {
     return 'Too many attempts. Wait a minute and try again.';
   }
